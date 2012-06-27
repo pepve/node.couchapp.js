@@ -55,7 +55,7 @@ if (process.mainModule && process.mainModule.filename === __filename) {
     , couch = process.argv.shift()
     ;
 
-  if (command == 'help' || command == undefined) {
+  if (command == 'help' || command == undefined || app == undefined) {
     console.log(
       [ "couchapp -- utility for creating couchapps" 
       , ""
@@ -75,10 +75,22 @@ if (process.mainModule && process.mainModule.filename === __filename) {
   if (command == 'boiler') {
     boiler(app);
   } else {
-    couchapp.createApp(require(abspath(app)), couch, function (app) {
-      if (command == 'push') app.push()
-      else if (command == 'sync') app.sync()
+    fs.readFile('.couchapp.json', function (error, data) {
+      var config = data && JSON.parse(data);
 
+      if (couch == undefined) {
+        if (config && config.couch) {
+          couch = config.couch;
+        } else {
+          console.log("No couch specified and no couch key found in .couchapp.json, giving up.")
+          return
+        }
+      }
+
+      couchapp.createApp(require(abspath(app)), couch, function (app) {
+        if (command == 'push') app.push()
+        else if (command == 'sync') app.sync()
+      })
     })
   } 
 }
